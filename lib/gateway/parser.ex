@@ -8,5 +8,8 @@ defmodule Gateway.Parser do
     """
     @callback parse(String.t) :: {:ok, Gateway.Data} | {:error, String.t}
 
-    @callback response(Gateway.Data) :: {:reply, String.t()} | :noreply
+    @doc """
+    Returns a response to the connected device
+    """
+    @callback response(Gateway.Data | nil) :: {:reply, String.t()} | :noreply
 end
