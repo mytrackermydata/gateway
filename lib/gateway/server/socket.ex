@@ -21,7 +21,7 @@ defmodule Gateway.Server.Socket do
       {:ok, pid} =
         DynamicSupervisor.start_child(Handler.DynamicSupervisor, %{
           id: Handler,
-          start: {Handler, :start_link, [%{socket: client, decoder: decoder}, []]},
+          start: {Handler, :start_link, [%{socket: client, decoder: decoder, device_id: nil}, []]},
           type: :worker
         })
   

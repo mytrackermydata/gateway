@@ -22,8 +22,9 @@ defmodule Gateway.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tkdecoder, path: "../tkdecoder/"},
-      {:amqpx, "~> 5.3"}
+      {:tkdecoder, path: "../tkdecoder/", in_umbrella: true},
+      {:amqpx, "~> 5.3"},
+      {:jason, "~> 1.2"}
     ]
   end
 end

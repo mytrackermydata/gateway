@@ -3,6 +3,7 @@ defmodule Gateway.Server.Handler do
     require Logger
 
     alias Gateway.Data
+    alias Gateway.Rabbit.Publisher
   
     def start_link(args, options) do
       GenServer.start_link(__MODULE__, args, options)
@@ -12,30 +13,21 @@ defmodule Gateway.Server.Handler do
     def init(args) do
       socket = Map.get(args, :socket)
       :inet.setopts(socket, active: true)
-      {:ok, %{socket: socket, device_id: nil}}
+      {:ok, args}
     end
   
     @impl true
     def handle_info({:tcp, socket, packet}, %{decoder: decoder} = state) do
-      Logger.info("Received: #{packet}")
-      Logger.info("State: #{inspect(state)}")
-  
-      try do
-        with {:ok, %Data{device_id: device_id} = data} <- decoder.dispatch(packet),
-              :ok <- send_data(data)
-        do
-          Logger.info("Data received from #{inspect(device_id)}: #{inspect(data)}")
+      with {:ok, %Data{device_id: device_id} = data} <- decoder.parse(packet),
+            :ok <- send_data(data)
+      do
+        Logger.info("Data received from #{inspect(device_id)}: #{inspect(data)}")
 
-          data
-          |> decoder.response()
-          |> send_reply(socket)
+        data
+        |> decoder.response()
+        |> send_reply(socket)
 
-          {:noreply, %{state | device_id: device_id}}
-        else
-          e ->
-            Logger.error("An error occurred: #{inspect(e)}")
-            {:noreply, state}
-        end
+        {:noreply, %{state | device_id: device_id}}
       else
         e ->
           Logger.error("An error occurred: #{inspect(e)}")
@@ -62,6 +54,6 @@ defmodule Gateway.Server.Handler do
     end
 
     defp send_reply({:reply, reply}, socket), do: :gen_tcp.send(socket, reply)
-    defp send_reply(:noreply, _), do: :ok
+    defp send_reply({:noreply, _}, _), do: :ok
   end
   
