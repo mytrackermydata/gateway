@@ -1,0 +1,15 @@
+#!/bin/bash
+set -x
+set -e
+
+mix local.hex --force
+mix deps.get
+mix compile
+
+if [ "$1" == "mix" ]; then
+  exec "$@"
+elif [ -n "$1" ]; then
+  sh -c "$@"
+else
+  while true; do sleep 300; done
+fi
