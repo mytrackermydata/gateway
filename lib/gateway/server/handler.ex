@@ -21,22 +21,24 @@ defmodule Gateway.Server.Handler do
       Logger.info("State: #{inspect(state)}")
   
       try do
-        case decoder.dispatch(packet) do
-          {:reply, response, %Data{device_id: device_id} = data} ->
-            :gen_tcp.send(socket, response)
-            Logger.info("Protocol data: #{inspect(data)}")
-            Logger.info("Response: #{response}")
-            # Publish.send_data(Jason.encode!(data))
-            {:noreply, %{state | device_id: device_id}}
-  
-          {:noreply, %Data{device_id: device_id} = data} ->
-            Logger.info("Protocol data: #{inspect(data)}")
-            # Publish.send_data(Jason.encode!(data))
-            {:noreply, %{state | device_id: device_id}}
+        with {:ok, %Data{device_id: device_id} = data} <- decoder.dispatch(packet),
+              :ok <- send_data(data)
+        do
+          Logger.info("Data received from #{inspect(device_id)}: #{inspect(data)}")
+
+          data
+          |> decoder.response()
+          |> send_reply(socket)
+
+          {:noreply, %{state | device_id: device_id}}
+        else
+          e ->
+            Logger.error("An error occurred: #{inspect(e)}")
+            {:noreply, state}
         end
-      rescue
+      else
         e ->
-          Logger.error("Error: #{inspect(e)}")
+          Logger.error("An error occurred: #{inspect(e)}")
           {:noreply, state}
       end
     end
@@ -52,5 +54,14 @@ defmodule Gateway.Server.Handler do
       Logger.error("TCP Socket error: #{inspect(reason)} for decoder #{decoder}")
       {:stop, {:shutdown, "TCP error: #{inspect(reason)}"}, state}
     end
+
+    def send_data(data) do
+      data
+      |> Jason.encode!()
+      |> Publisher.send_data()
+    end
+
+    defp send_reply({:reply, reply}, socket), do: :gen_tcp.send(socket, reply)
+    defp send_reply(:noreply, _), do: :ok
   end
   

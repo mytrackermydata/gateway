@@ -3,9 +3,17 @@ defmodule Gateway.Application do
 
   use Application
 
+  alias Amqpx.Helper
+
   @impl true
   def start(_type, _args) do
-    children = load_server()
+    children = Enum.concat(
+      [
+        Helper.manager_supervisor_configuration(Application.get_env(:gateway, :amqp_connection)),
+        Helper.producer_supervisor_configuration(Application.get_env(:gateway, :producer))
+      ],
+      load_server()
+    )
     opts = [strategy: :one_for_one, name: Gateway.Supervisor]
     Supervisor.start_link(children, opts)
   end

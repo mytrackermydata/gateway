@@ -4,6 +4,8 @@ defmodule Gateway.Data do
     """
     @derive Jason.Encoder
 
+    @enforce_keys [:device_id]
+
     defstruct [
         :firm,
         :device,
