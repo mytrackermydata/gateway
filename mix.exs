@@ -24,6 +24,7 @@ defmodule Gateway.MixProject do
     [
       {:tkdecoder, path: "../tkdecoder/", in_umbrella: true},
       {:amqpx, "~> 5.3"},
+      {:plug_cowboy, "~> 2.0"},
       {:jason, "~> 1.2"}
     ]
   end

@@ -18,4 +18,7 @@ config :gateway, :producer, %{
   ]
 }
 
+config :gateway, :healthcheck,
+  port: 4001
+
 import_config "#{Mix.env()}.exs"

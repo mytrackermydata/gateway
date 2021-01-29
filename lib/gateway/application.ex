@@ -10,11 +10,16 @@ defmodule Gateway.Application do
     children = Enum.concat(
       [
         Helper.manager_supervisor_configuration(Application.get_env(:gateway, :amqp_connection)),
-        Helper.producer_supervisor_configuration(Application.get_env(:gateway, :producer))
+        Helper.producer_supervisor_configuration(Application.get_env(:gateway, :producer)),
+        Plug.Cowboy.child_spec(
+          scheme: :http,
+          plug: Gateway.Health.Endpoint,
+          options: [port: Application.get_env(:gateway, :healthcheck)[:port]]
+        )
       ],
       load_server()
     )
-    opts = [strategy: :one_for_one, name: Gateway.Supervisor]
+    opts = [strategy: :one_for_one, name: Gateway.Supervisor, max_restarts: 4]
     Supervisor.start_link(children, opts)
   end
 
