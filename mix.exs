@@ -22,7 +22,7 @@ defmodule Gateway.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tkdecoder, path: "../tkdecoder/", in_umbrella: true},
+      {:tkdecoder, git: "https://github.com/mytrackermydata/tkdecoder"},
       {:amqpx, "~> 5.3"},
       {:plug_cowboy, "~> 2.0"},
       {:jason, "~> 1.2"}
