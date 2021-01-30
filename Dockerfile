@@ -4,6 +4,8 @@ WORKDIR /code
 
 COPY . /code
 
+ENV MIX_ENV=prod
+
 RUN apt-get install -y openssh-client \
     git && \
     mix local.hex --force && \
@@ -13,5 +15,8 @@ RUN apt-get install -y openssh-client \
     cp -rp /root/.mix /home/app/ && \
     chown -R app:app /home/app/.mix
 
+RUN mix local.hex --force && \
+    mix deps.get && \
+    mix compile
 
 ENTRYPOINT ["/code/entrypoint"]
