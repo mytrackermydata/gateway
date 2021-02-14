@@ -21,7 +21,7 @@ defmodule Gateway.Server.Handler do
       with {:ok, %Data{device_id: device_id} = data} <- decoder.parse(packet),
             :ok <- send_data(data)
       do
-        Logger.info("Data received from #{inspect(device_id)}: #{inspect(data)}")
+        Logger.info("Data received from #{inspect(device_id)}")
 
         data
         |> decoder.response()
@@ -53,7 +53,11 @@ defmodule Gateway.Server.Handler do
       |> Publisher.send_data()
     end
 
-    defp send_reply({:reply, reply}, socket), do: :gen_tcp.send(socket, reply)
+    defp send_reply({:reply, reply}, socket) do
+      Logger.info("Send reply: #{inspect(reply)}")
+      :gen_tcp.send(socket, reply)
+    end
+
     defp send_reply({:noreply, _}, _), do: :ok
   end
   
