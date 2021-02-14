@@ -15,7 +15,8 @@ defmodule Gateway.Application do
           scheme: :http,
           plug: Gateway.Health.Endpoint,
           options: [port: Application.get_env(:gateway, :healthcheck)[:port]]
-        )
+        ),
+        {Gateway.Redis, Application.get_env(:gateway, :redis)[:uri]}
       ],
       load_server()
     )

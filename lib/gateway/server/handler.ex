@@ -2,7 +2,7 @@ defmodule Gateway.Server.Handler do
     use GenServer
     require Logger
 
-    alias Gateway.Data
+    alias Gateway.{Data, Redis}
     alias Gateway.Rabbit.Publisher
   
     def start_link(args, options) do
@@ -27,6 +27,8 @@ defmodule Gateway.Server.Handler do
         |> decoder.response()
         |> send_reply(socket)
 
+        Redis.subscribe("device_#{device_id}", self())
+
         {:noreply, %{state | device_id: device_id}}
       else
         e ->
@@ -45,6 +47,19 @@ defmodule Gateway.Server.Handler do
     def handle_info({:tcp_error, _socket, reason}, %{decoder: decoder} = state) do
       Logger.error("TCP Socket error: #{inspect(reason)} for decoder #{decoder}")
       {:stop, {:shutdown, "TCP error: #{inspect(reason)}"}, state}
+    end
+
+    @impl true
+    def handle_info({:redix_pubsub, _, _, :message, %{payload: payload}}, %{device_id: device_id, socket: socket} = state) do
+      Logger.info("Received message for #{device_id}: #{payload}")
+      :gen_tcp.send(socket, payload)
+      {:noreply, state}
+    end
+
+    @impl true
+    def handle_info({:redix_pubsub, _, _, :subscribed, %{channel: channel}}, %{device_id: device_id} = state) do
+      Logger.info("#{device_id} subscribed on channel #{channel}")
+      {:noreply, state}
     end
 
     def send_data(data) do

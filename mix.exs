@@ -25,7 +25,8 @@ defmodule Gateway.MixProject do
       {:tkdecoder, git: "https://github.com/mytrackermydata/tkdecoder"},
       {:amqpx, "~> 5.3"},
       {:plug_cowboy, "~> 2.0"},
-      {:jason, "~> 1.2"}
+      {:jason, "~> 1.2"},
+      {:redix, ">= 0.0.0"}
     ]
   end
 end
