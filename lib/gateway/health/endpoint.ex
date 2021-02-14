@@ -38,7 +38,6 @@ defmodule Gateway.Health.Endpoint do
     defp childrens_alive?(pids) do
         pids
         |> Enum.filter(fn pid ->
-            Logger.info("Process #{inspect(pid)} alive? #{Process.alive?(pid)}")
             Process.alive?(pid)
         end)
         |> case do
