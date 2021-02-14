@@ -50,9 +50,11 @@ defmodule Gateway.Server.Handler do
     end
 
     @impl true
-    def handle_info({:redix_pubsub, _, _, :message, %{payload: payload}}, %{device_id: device_id, socket: socket} = state) do
-      Logger.info("Received message for #{device_id}: #{payload}")
-      :gen_tcp.send(socket, payload)
+    def handle_info({:redix_pubsub, _, _, :message, %{channel: channel, payload: payload}}, %{device_id: device_id, socket: socket} = state) do
+      if String.replace(channel, "device_", "") == device_id do
+        Logger.info("Received message for #{device_id}: #{payload}")
+        :gen_tcp.send(socket, payload)
+      end
       {:noreply, state}
     end
 
