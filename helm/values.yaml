@@ -8,7 +8,7 @@ image:
   repository: mtmd/gateway
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 0.0.1
+  tag: 0.0.4
   env:
     - name: RABBITMQ_USER
       value: "tkdecoder"
@@ -28,6 +28,8 @@ image:
         secretKeyRef:
           name: tkdecoder-secrets
           key: tkdecoder-rabbitmq-pass
+    - name: REDIS_URI
+      value: "redis://redis-primary.default.svc.cluster.local:6379/3"
 
 imagePullSecrets: []
 nameOverride: ""

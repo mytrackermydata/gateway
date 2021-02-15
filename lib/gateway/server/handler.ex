@@ -2,7 +2,7 @@ defmodule Gateway.Server.Handler do
     use GenServer
     require Logger
 
-    alias Gateway.Data
+    alias Gateway.{Data, Redis}
     alias Gateway.Rabbit.Publisher
   
     def start_link(args, options) do
@@ -27,6 +27,8 @@ defmodule Gateway.Server.Handler do
         |> decoder.response()
         |> send_reply(socket)
 
+        Redis.subscribe("device_#{device_id}", self())
+
         {:noreply, %{state | device_id: device_id}}
       else
         e ->
@@ -37,14 +39,43 @@ defmodule Gateway.Server.Handler do
   
     @impl true
     def handle_info({:tcp_closed, _socket}, %{decoder: decoder} = state) do
+      case Map.get(state, :device_id) do
+        nil ->
+          Logger.info("Device ID doesn't exists, skip pubsub unsubscribing")
+
+        device_id ->
+          Redis.unsubscribe("device_#{device_id}", self())
+      end
       Logger.info("Socket is closed for decoder #{decoder}")
       {:stop, {:shutdown, "Socket is closed"}, state}
     end
   
     @impl true
     def handle_info({:tcp_error, _socket, reason}, %{decoder: decoder} = state) do
+      case Map.get(state, :device_id) do
+        nil ->
+          Logger.info("Device ID doesn't exists, skip pubsub unsubscribing")
+
+        device_id ->
+          Redis.unsubscribe("device_#{device_id}", self())
+      end
       Logger.error("TCP Socket error: #{inspect(reason)} for decoder #{decoder}")
       {:stop, {:shutdown, "TCP error: #{inspect(reason)}"}, state}
+    end
+
+    @impl true
+    def handle_info({:redix_pubsub, _, _, :message, %{channel: channel, payload: payload}}, %{device_id: device_id, socket: socket} = state) do
+      if String.replace(channel, "device_", "") == device_id do
+        Logger.info("Received message for #{device_id}")
+        :gen_tcp.send(socket, payload)
+      end
+      {:noreply, state}
+    end
+
+    @impl true
+    def handle_info({:redix_pubsub, _, _, :subscribed, %{channel: channel}}, %{device_id: device_id} = state) do
+      Logger.info("#{device_id} subscribed on channel #{channel}")
+      {:noreply, state}
     end
 
     def send_data(data) do
