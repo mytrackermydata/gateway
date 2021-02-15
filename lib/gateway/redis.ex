@@ -17,8 +17,17 @@ defmodule Gateway.Redis do
         {:reply, Redix.PubSub.subscribe(pubsub, channel, process), state}
     end
 
+    @impl true
+    def handle_call({:unsubscribe, channel, process}, _from, %{pubsub: pubsub} = state) do
+        {:reply, Redix.PubSub.unsubscribe(pubsub, channel, process), state}
+    end
+
     def subscribe(channel, process) do
         GenServer.call(:pubsub, {:subscribe, channel, process})
+    end
+
+    def unsubscribe(channel, process) do
+        GenServer.call(:pubsub, {:unsubscribe, channel, process})
     end
 
 end
